@@ -143,11 +143,11 @@ func (g *CommentGroup) Text() string {
 // Miscellaneous and types
 
 type (
-    // A RestrictionSpec represents template restrictions
-    RestrictionSpec struct {
-        Kind        token.Token
-        KindPos     token.Pos
-    }
+	// A RestrictionSpec represents template restrictions
+	RestrictionSpec struct {
+		Kind    token.Token
+		KindPos token.Pos
+	}
 )
 
 // ----------------------------------------------------------------------------
@@ -286,7 +286,6 @@ func (x *FieldList) End() token.Pos { return x.Fields[len(x.Fields)-1].End() }
 func (x *Field) exprNode()     {}
 func (x *FieldList) exprNode() {}
 
-
 // ----------------------------------------------------------------------------
 // Declarations
 
@@ -294,6 +293,7 @@ type (
 	ImportDecl struct {
 		ImportPos   token.Pos
 		Module      *Ident
+		Language    *LangSpec
 		ImportSpecs []ImportSpec
 	}
 
@@ -377,14 +377,10 @@ func (x *ExprStmt) stmtNode()  {}
 // Modules
 
 type Module struct {
-	Doc    *CommentGroup // associated documentation; or nil
-	Module token.Pos     // position of "module" keyword
-	Name   *Ident        // module name
-	Decls  []Decl        // top-level declarations; or nil
-	Scope  *Scope        // module scope
-	//Imports    []*ImportSpec   // imports in this file
-	Unresolved []*Ident        // unresolved identifiers in this file
-	Comments   []*CommentGroup // list of all comments in the source file
+	Module   token.Pos // position of "module" keyword
+	Name     *Ident
+	Language *LangSpec
+	Decls    []Decl
 }
 
 func (f *Module) Pos() token.Pos { return f.Module }
@@ -393,4 +389,9 @@ func (f *Module) End() token.Pos {
 		return f.Decls[n-1].End()
 	}
 	return f.Name.End()
+}
+
+type LangSpec struct {
+	Language token.Pos
+	List     []Expr
 }

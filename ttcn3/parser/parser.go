@@ -814,38 +814,29 @@ func (p *parser) parseModule() *ast.Module {
 		defer un(trace(p, "Module"))
 	}
 
-	pos := p.expect(token.MODULE)
-	name := p.parseIdent()
+	x := new(ast.Module)
+	x.Module = p.expect(token.MODULE)
+	x.Name = p.parseIdent()
 
 	if p.tok == token.LANGUAGE {
-		p.parseLanguageSpec()
+		x.Language = p.parseLanguageSpec()
 	}
 
 	p.expect(token.LBRACE)
 
-	var decls []ast.Decl
 	for p.tok != token.RBRACE && p.tok != token.EOF {
-		decls = append(decls, p.parseModuleDef())
+		x.Decls = append(x.Decls, p.parseModuleDef())
 	}
 	p.expect(token.RBRACE)
 
-	return &ast.Module{
-		Module:   pos,
-		Name:     name,
-		Decls:    decls,
-		Comments: p.comments,
-	}
+	return x
 }
 
-func (p *parser) parseLanguageSpec() {
-	p.next()
-	for {
-		p.expect(token.STRING)
-		if p.tok != token.COMMA {
-			break
-		}
-		p.next()
-	}
+func (p *parser) parseLanguageSpec() *ast.LangSpec {
+	x := new(ast.LangSpec)
+	x.Language = p.expect(token.LANGUAGE)
+	x.List = p.parseExprList()
+	return x
 }
 
 func (p *parser) parseModuleDef() ast.Decl {
@@ -911,17 +902,15 @@ func (p *parser) parseImport() ast.Decl {
 		defer un(trace(p, "Import"))
 	}
 
-	pos := p.pos
-	p.next()
+	x := new(ast.ImportDecl)
+	x.ImportPos = p.expect(token.IMPORT)
 	p.expect(token.FROM)
-
-	name := p.parseIdent()
+	x.Module = p.parseIdent()
 
 	if p.tok == token.LANGUAGE {
-		p.parseLanguageSpec()
+		x.Language = p.parseLanguageSpec()
 	}
 
-	var specs []ast.ImportSpec
 	switch p.tok {
 	case token.ALL:
 		p.next()
@@ -936,11 +925,7 @@ func (p *parser) parseImport() ast.Decl {
 
 	p.parseWith()
 
-	return &ast.ImportDecl{
-		ImportPos:   pos,
-		Module:      name,
-		ImportSpecs: specs,
-	}
+	return x
 }
 
 func (p *parser) parseImportSpec() {
@@ -1140,7 +1125,7 @@ func (p *parser) parseType() ast.Decl {
 	p.next()
 	switch p.tok {
 	case token.ADDRESS, token.CHARSTRING, token.IDENT, token.NULL, token.UNIVERSAL:
-		p.parseSubType()
+		return p.parseSubType()
 	case token.UNION:
 		p.next()
 		p.parseStructType()
